@@ -1,0 +1,191 @@
+package TokoObat;
+
+import java.awt.EventQueue;
+import javax.swing.JInternalFrame;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import javax.swing.JTable;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JButton;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+public class pemasok extends JInternalFrame {
+	private JTable table;
+	private JTextField txtIDPem;
+	private JTextField txtNamaPem;
+	private DefaultTableModel tabelModel;
+
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					pemasok frame = new pemasok();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public pemasok() {
+		setBounds(100, 100, 450, 508);
+		this.setTitle("Pemasok");
+		getContentPane().setLayout(null);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(10, 11, 600, 250);
+		getContentPane().add(scrollPane);
+		
+		table = new JTable();
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int a = table.getSelectedRow();
+		        
+		        if(a == -1) {
+		            return;
+		        }
+		        
+		        String ids = (String) tabelModel.getValueAt(a, 0);
+		        txtIDPem.setText(ids);
+		        String nama= (String) tabelModel.getValueAt(a, 1);
+		        txtNamaPem.setText(nama);
+			}
+		});
+		
+		scrollPane.setViewportView(table);
+		tabelModel = new DefaultTableModel();
+        tabelModel.addColumn("ID Pemasok");
+        tabelModel.addColumn("Nama Pemasok");
+		table.setModel(tabelModel);	
+        tampilTabel();
+		
+		txtIDPem = new JTextField();
+		txtIDPem.setBounds(140, 291, 163, 20);
+		getContentPane().add(txtIDPem);
+		txtIDPem.setColumns(10);
+		
+		txtNamaPem = new JTextField();
+		txtNamaPem.setColumns(10);
+		txtNamaPem.setBounds(140, 322, 220, 20);
+		getContentPane().add(txtNamaPem);
+		
+		JLabel lblIdPemasok = new JLabel("ID Pemasok");
+		lblIdPemasok.setBounds(10, 294, 87, 14);
+		getContentPane().add(lblIdPemasok);
+		
+		JLabel lblNamaPemasok = new JLabel("Nama Pemasok");
+		lblNamaPemasok.setBounds(10, 325, 100, 14);
+		getContentPane().add(lblNamaPemasok);
+		
+		JButton btnTambah = new JButton("TAMBAH");
+		btnTambah.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+			try {
+		        Connection con = configuration.getCon();
+		        String query = "INSERT INTO Supplier VALUES(?,?)";
+		        PreparedStatement prepare = con.prepareStatement(query);
+		        
+		        prepare.setString(1, txtIDPem.getText());
+		        prepare.setString(2, txtNamaPem.getText());
+
+		        prepare.executeUpdate();
+		        JOptionPane.showMessageDialog(null, "Data Pemasok Berhasil Ditambahkan");
+		        prepare.close();
+	        } catch(Exception ex) {
+	            JOptionPane.showMessageDialog(null, "Data Pemasok Gagal Ditambahkan");
+	            System.out.println(ex);
+	        } finally {
+	            tampilTabel();
+	            //refresh();
+	        }
+		}
+		});
+		
+		btnTambah.setBounds(140, 375, 89, 23);
+		getContentPane().add(btnTambah);
+		
+		JButton btnUbah = new JButton("UBAH");
+		btnUbah.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+			        Connection con = configuration.getCon();
+			        String query = "UPDATE Supplier SET  nama = ? WHERE idSupp = ?";
+			        PreparedStatement prepare = con.prepareStatement(query);
+			       
+			        prepare.setString(1, txtNamaPem.getText());
+			        prepare.setString(2, txtIDPem.getText());
+			        
+			        prepare.executeUpdate();
+			        JOptionPane.showMessageDialog(null, "Data Pemasok Berhasil Diubah");
+			        prepare.close();
+		        } catch(Exception ex) {
+		            JOptionPane.showMessageDialog(null, "Data Pemasok Gagal Diubah");
+		            System.out.println(ex);
+		        } finally {
+		            tampilTabel();
+		           txtIDPem.setEnabled(true);
+		            //refresh();            
+		        }
+			}
+		});
+		
+		btnUbah.setBounds(240, 375, 89, 23);
+		getContentPane().add(btnUbah);
+		
+		JButton btnHapus = new JButton("HAPUS");
+		btnHapus.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				 try {
+		            Connection con = configuration.getCon();
+		            String query = "DELETE FROM Supplier WHERE idSupp = ?";
+		            PreparedStatement prepare = con.prepareStatement(query);
+		            
+		            prepare.setString(1, txtIDPem.getText());
+		            prepare.executeUpdate();
+		            JOptionPane.showMessageDialog(null, "Data Pemasok Berhasil Dihapus");
+		            prepare.close();
+		        } catch(Exception ex) {
+		            JOptionPane.showMessageDialog(null, "Data Pemasok Gagal Diubah");
+		            System.out.println(ex);
+		        } finally {
+		            tampilTabel();
+		            txtIDPem.setEnabled(true);
+		            //refresh();
+		        }
+			}
+		});
+		
+		btnHapus.setBounds(340, 375, 89, 23);
+		getContentPane().add(btnHapus);
+	}
+	
+	public void tampilTabel() {
+        tabelModel.getDataVector().removeAllElements();
+        tabelModel.fireTableDataChanged();
+        try {
+            Connection con = configuration.getCon();
+            Statement state = con.createStatement();
+            String query = "SELECT * FROM Supplier";
+            
+            ResultSet rs = state.executeQuery(query);
+            
+            while(rs.next()) {
+                Object obj[] = new Object[3];
+                obj[0] = rs.getString(1);
+                obj[1] = rs.getString(2);
+                
+                tabelModel.addRow(obj);
+            }
+        } catch(Exception ex) {
+            System.out.println(ex);
+        }
+    }
+}
